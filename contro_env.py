@@ -1,0 +1,342 @@
+import pickle
+import gym
+import numpy as np
+
+
+def decide_move(offset):
+    global min
+    global max
+    plus = 2
+    minus = 1
+    fixed = 0
+    action = [0, 0, 0]
+    for i in range(3):
+        if offset[i] > max:
+            action[i] = plus
+        elif offset[i] < min:
+            action[i] = minus
+        else:
+            action[i] = fixed
+    return action
+
+def evalue_move(offset):
+    global min
+    global max
+    if offset[0] < max and offset[1] < max and offset[2] < max and offset[0] > min and offset[1] > min and offset[2] > min:
+        return True 
+    else:
+        return False
+
+
+def calculate_desired_goal(observation, hight):
+    global push_point_distance
+    target_position = observation["my_new_observation"][23:26]
+    bow_position = observation["my_new_observation"][14:17]
+
+    delta = target_position - bow_position
+    ratio = abs(delta[1]/delta[0])
+    if delta[0] < 0:
+        x_sign = -1
+    else:
+        x_sign = 1
+
+    if delta[1] < 0:
+        y_sign = -1
+    else:
+        y_sign = 1 
+
+    if ratio > 2:
+        abs_delta = [0, 1]
+    elif ratio > 0.5:
+        abs_delta = [1, 1]
+    else:
+        abs_delta = [1, 0]
+
+    if ratio > 8:
+        abs_delta = [0, 1]
+    elif ratio > 8/3:
+        abs_delta = [2/8, 1]
+    elif ratio > 8/5:
+        abs_delta = [4/8, 1]
+    elif ratio > 8/7:
+        abs_delta = [6/8, 1]
+    elif ratio > 7/8:
+        abs_delta = [1, 8/8]
+    elif ratio > 5/8:
+        abs_delta = [1, 6/8]
+    elif ratio > 3/8:
+        abs_delta = [1, 4/8]
+    elif ratio > 1/8:
+        abs_delta = [1, 2/8]
+    else:
+        abs_delta = [1, 0]
+
+    delta_ac = [abs_delta[0]*x_sign*push_point_distance, abs_delta[1]*y_sign*push_point_distance, 0]
+    desired_goal = bow_position - delta_ac
+    desired_goal[2] = bow_position[2] + hight
+    return desired_goal
+
+def policy(observation):
+    global stage
+    global close_counter
+    global open_counter
+    global push_counter
+    global max_push_step
+    
+
+    hand_open = 1
+    close = 0
+
+    action = [fixed, fixed, fixed, close]
+
+    if stage == "reach_object":
+        # move towards the object
+        # if distance > 0.03 of distance < -0.03, using 1/-1
+        # else using distance exactly
+        action_3 = observation["observation"][6:9]
+        action_3[2] = action_3[2] + 0.07
+
+        # remember:
+        # CAN'T change min and max casually
+        # because it should be the same to the step with classification standard step size
+
+
+        if evalue_move(action_3):
+            # print("reach the target !!")
+            stage = stage_set[1]
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
+
+    elif stage == "go_down":
+
+        action_3 = observation["observation"][6:9]
+        action_3[2] = action_3[2] + 0.0
+
+        if evalue_move(action_3):
+            # print("go down already !!")
+            stage = stage_set[2]
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
+
+    elif stage == "close":
+        # close the claw !!
+        if close_counter < 3:
+            close_counter = close_counter + 1
+        else:
+            # print("close the claw !!")
+            stage = stage_set[3]
+            close_counter = 0
+        action[3] = close
+
+    elif stage == "reach":
+
+        desired_goal = observation["desired_goal"]
+        desired_goal = observation["my_new_observation"][14:17] + [0, 0, 0.1]
+
+
+        achieved_goal = observation["achieved_goal"]
+        action_3 = desired_goal - achieved_goal
+
+
+        if evalue_move(action_3):
+            # print("reach already !!")
+            stage = stage_set[4]
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    elif stage == "put_down":
+
+        desired_goal = observation["my_new_observation"][14:17] + [0, 0, 0.04]
+
+        achieved_goal = observation["achieved_goal"]
+        action_3 = desired_goal - achieved_goal
+
+
+        if evalue_move(action_3):
+            stage = stage_set[5]
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    elif stage == "release":
+
+        if open_counter < 3:
+            open_counter = open_counter + 1
+        else:
+            # print("close the claw !!")
+            stage = stage_set[6]
+            open_counter = 0
+        action[3] = hand_open
+
+    elif stage == "raise_up":
+        # [14:17] is bow0's position
+        desired_goal = observation["my_new_observation"][14:17] + [0, 0, 0.1]
+        # [0:3] is gripper's position
+        achieved_goal = observation["my_new_observation"][0:3]
+        action_3 = desired_goal - achieved_goal
+
+
+
+        if evalue_move(action_3):
+            stage = stage_set[7]
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
+
+    elif stage == "close_again":
+        # close the claw !!
+        if close_counter < 3:
+            close_counter = close_counter + 1
+        else:
+            # print("close the claw !!")
+            stage = stage_set[8]
+            close_counter = 0
+        action[3] = close
+        
+    elif stage == "reach_push_point":
+        # calculate desired_goal
+        desired_goal = calculate_desired_goal(observation, 0.1)
+
+        # calculate current_position
+        current_position = observation["my_new_observation"][0:3]
+
+        action_3 = desired_goal - current_position
+
+
+        if evalue_move(action_3):
+            stage = stage_set[9]
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    elif stage == "go_down_again":
+
+        # calculate desired_goal
+        desired_goal = calculate_desired_goal(observation, 0.025)
+
+        # calculate current_goal
+        current_position = observation["my_new_observation"][0:3]
+
+        action_3 = desired_goal - current_position
+
+
+        if evalue_move(action_3):
+            stage = stage_set[10]
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    elif stage == "push":
+
+        if push_counter < max_push_step:
+            push_counter = push_counter + 1
+
+
+            target_position = observation["my_new_observation"][23:26]
+            current_position = observation["my_new_observation"][0:3]
+            bow_position = observation["my_new_observation"][14:17]
+
+            # use current to decide action
+            # use bowl_position to decide metric
+            # this need to think carefully
+            action_3 = target_position - current_position
+            action_3 = [ action_3[0]*0.8, action_3[1]*0.8, action_3[2]]
+            metric = target_position - bow_position
+
+            matric_min = -0.03
+            matric_max = 0.03
+            
+
+            if metric[0] < matric_max and metric[1] < matric_max and metric[0] > matric_min and metric[1] > matric_min:
+                # yeah !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                stage = stage_set[11]
+            else:
+                action[0:3] = decide_move(action_3)
+            action[3] = close
+
+        else:
+            action[3] = close
+            stage = stage_set[9]
+            push_counter = 0
+
+        
+
+        # ===================================================
+
+    return action
+
+
+
+
+env = gym.make('FetchPickAndPlace-v0')
+
+#                   0           1           2       3           4           5       6               7
+stage_set = ["reach_object", "go_down", "close", "reach", "put_down", "release", "raise_up", "close_again", 
+
+#                   8                9              10      11
+            "reach_push_point", "go_down_again", "push" , "stay"]
+
+close_counter = 0
+open_counter = 0
+push_counter = 0
+max_push_step = 6
+step_size = 0.01
+min = -step_size
+max = step_size
+push_point_distance = 0.07
+
+data = []
+
+for trajectory_num in range(5000):
+    stage = stage_set[0]
+
+    observation = env.reset()
+    done = False
+    # print(observation)
+
+    plus = 2
+    minus = 1
+    fixed = 0
+
+    hand_open = 1
+    close = 0
+
+    while not done:
+        env.render()
+
+        action_category = policy(observation)
+        action = np.zeros((4))
+
+        for i in range(3):
+            if action_category[i] == plus:
+                action[i] = (step_size/0.03)
+            elif action_category[i] == minus:
+                action[i] = -(step_size/0.03)
+            elif action_category[i] == fixed:
+                action[i] = 0.0
+
+        if action_category[3] == hand_open:
+            action[3] = 1.0
+        elif action_category[3] == close:
+            action[3] = -1.0
+
+        previous_observation = observation
+        observation, reward, done, info = env.step(action)
+
+        record = []
+        record.extend(previous_observation["observation"])
+        record.extend(action_category)
+        record.extend(observation["observation"])
+        record.extend(observation["desired_goal"])
+        record.extend([float(done)])
+
+        data.append(record)
+
+    print(trajectory_num)
+
+# data = np.array(data)
+# pickle.dump(data, open("FetchPickAndPlace-category-5000.p", "wb"))
+
