@@ -1,5 +1,5 @@
 import pickle
 
-data = pickle.load(open('Pick-Place-Push-category-500.p', 'rb'))
+data = pickle.load(open('Pick-Place-Push-category-10.p', 'rb'))
 
-print(data[-3])
+print(data.shape)

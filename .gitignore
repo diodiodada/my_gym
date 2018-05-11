@@ -3,6 +3,7 @@
 *.py~
 .DS_Store
 .cache
+*.p
 
 # Setuptools distribution and build folders.
 /dist/
@@ -18,6 +19,7 @@
 *.sublime-workspace
 
 logs/
+images/
 
 .ipynb_checkpoints
 ghostdriver.log

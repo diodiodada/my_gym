@@ -1,6 +1,7 @@
 import pickle
 import gym
 import numpy as np
+from PIL import Image
 
 
 def decide_move(offset):
@@ -298,6 +299,8 @@ stage_set = ["reach_object", "go_down", "close", "reach", "put_down", "release",
 data = []
 trajectory_num = 0
 
+image_num_already_success = 0
+
 while True:
     stage = stage_set[0]
 
@@ -314,7 +317,21 @@ while True:
 
     one_trajectory = []
 
+    image_num = image_num_already_success
+
+    # to avoid all black image
+    env.render(mode='rgb_array')
+
     while not done:
+        # saving image
+        image = env.render(mode='rgb_array')
+        image = Image.fromarray(image)
+        w, h = image.size
+        image = image.resize((w//4, h//4),Image.ANTIALIAS)  
+        image.save('images/'+ str(image_num) +'.jpg', 'jpeg')
+        image_num += 1
+
+        # NOT saving image
         # env.render()
 
         action_category, success = policy(observation)
@@ -348,12 +365,18 @@ while True:
         if success:
             data.extend(one_trajectory)
             trajectory_num += 1
+            image_num_already_success += len(one_trajectory)
             break
+
+
     print(trajectory_num)
 
-    if trajectory_num == 10000:
+    if trajectory_num == 1000:
         break
 
+print("total trajectory num is : ",end="")
+print(image_num_already_success)
+
 data = np.array(data)
-pickle.dump(data, open("Pick-Place-Push-category-10000.p", "wb"))
+pickle.dump(data, open("Pick-Place-Push-category-1000.p", "wb"))
 
