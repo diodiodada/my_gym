@@ -45,13 +45,6 @@ def calculate_desired_goal(observation, hight):
     else:
         y_sign = 1 
 
-    if ratio > 2:
-        abs_delta = [0, 1]
-    elif ratio > 0.5:
-        abs_delta = [1, 1]
-    else:
-        abs_delta = [1, 0]
-
     if ratio > 8:
         abs_delta = [0, 1]
     elif ratio > 8/3:
@@ -86,6 +79,7 @@ def policy(observation):
 
     hand_open = 1
     close = 0
+    success = False
 
     action = [fixed, fixed, fixed, close]
 
@@ -249,10 +243,11 @@ def policy(observation):
             matric_min = -0.03
             matric_max = 0.03
             
-
+            # if failed, will loop here
             if metric[0] < matric_max and metric[1] < matric_max and metric[0] > matric_min and metric[1] > matric_min:
                 # yeah !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 stage = stage_set[11]
+                push_counter = 0
             else:
                 action[0:3] = decide_move(action_3)
             action[3] = close
@@ -262,35 +257,48 @@ def policy(observation):
             stage = stage_set[9]
             push_counter = 0
 
+    elif stage == "check":
+        # if failed, will loop here
+        object0_height = observation["my_new_observation"][7]
+
+        if object0_height > 0.441:
+            stage = stage_set[12]
+            success = True
+
+    elif stage == "stay":
+
+        pass
         
-
-        # ===================================================
-
-    return action
+    return action, success
 
 
 
+# Hyper parameters
+max_push_step = 6
+push_point_distance = 0.07
+step_size = 0.01
+
+
+# global parameters
+close_counter = 0
+open_counter = 0
+push_counter = 0
+min = -step_size
+max = step_size
 
 env = gym.make('FetchPickAndPlace-v0')
 
 #                   0           1           2       3           4           5       6               7
 stage_set = ["reach_object", "go_down", "close", "reach", "put_down", "release", "raise_up", "close_again", 
 
-#                   8                9              10      11
-            "reach_push_point", "go_down_again", "push" , "stay"]
+#                   8                9              10      11       12
+            "reach_push_point", "go_down_again", "push" , "check", "stay"]
 
-close_counter = 0
-open_counter = 0
-push_counter = 0
-max_push_step = 6
-step_size = 0.01
-min = -step_size
-max = step_size
-push_point_distance = 0.07
 
 data = []
+trajectory_num = 0
 
-for trajectory_num in range(5000):
+while True:
     stage = stage_set[0]
 
     observation = env.reset()
@@ -304,12 +312,16 @@ for trajectory_num in range(5000):
     hand_open = 1
     close = 0
 
-    while not done:
-        env.render()
+    one_trajectory = []
 
-        action_category = policy(observation)
+    while not done:
+        # env.render()
+
+        action_category, success = policy(observation)
+
         action = np.zeros((4))
 
+        # change from category to value
         for i in range(3):
             if action_category[i] == plus:
                 action[i] = (step_size/0.03)
@@ -326,17 +338,22 @@ for trajectory_num in range(5000):
         previous_observation = observation
         observation, reward, done, info = env.step(action)
 
-        record = []
-        record.extend(previous_observation["observation"])
-        record.extend(action_category)
-        record.extend(observation["observation"])
-        record.extend(observation["desired_goal"])
-        record.extend([float(done)])
+        one_step = []
+        one_step.extend(previous_observation["my_new_observation"])
+        one_step.extend(action_category)
+        one_step.extend(observation["my_new_observation"])
+        one_step.extend([float(success)])
+        one_trajectory.append(one_step)
 
-        data.append(record)
-
+        if success:
+            data.extend(one_trajectory)
+            trajectory_num += 1
+            break
     print(trajectory_num)
 
-# data = np.array(data)
-# pickle.dump(data, open("FetchPickAndPlace-category-5000.p", "wb"))
+    if trajectory_num == 10000:
+        break
+
+data = np.array(data)
+pickle.dump(data, open("Pick-Place-Push-category-10000.p", "wb"))
 
