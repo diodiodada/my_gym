@@ -324,15 +324,15 @@ while True:
 
     while not done:
         # saving image
-        image = env.render(mode='rgb_array')
-        image = Image.fromarray(image)
-        w, h = image.size
-        image = image.resize((w//4, h//4),Image.ANTIALIAS)  
-        image.save('images/'+ str(image_num) +'.jpg', 'jpeg')
-        image_num += 1
+        # image = env.render(mode='rgb_array')
+        # image = Image.fromarray(image)
+        # w, h = image.size
+        # image = image.resize((w//4, h//4),Image.ANTIALIAS)  
+        # image.save('images/'+ str(image_num) +'.jpg', 'jpeg')
+        # image_num += 1
 
         # NOT saving image
-        # env.render()
+        env.render()
 
         action_category, success = policy(observation)
 
@@ -377,6 +377,6 @@ while True:
 print("total trajectory num is : ",end="")
 print(image_num_already_success)
 
-data = np.array(data)
-pickle.dump(data, open("Pick-Place-Push-category-1000.p", "wb"))
+# data = np.array(data)
+# pickle.dump(data, open("Pick-Place-Push-category-1000.p", "wb"))
 
