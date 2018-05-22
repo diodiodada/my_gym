@@ -114,19 +114,28 @@ def policy(observation):
 
         if evalue_move(action_3):
             # print("go down already !!")
-            stage = "close"
+            stage = "grasp_object"
         else:
             action[0:3] = decide_move(action_3)
         action[3] = hand_open
 
-    elif stage == "close":
+    elif stage == "grasp_object":
         # close the claw !!
         if close_counter < 3:
             close_counter = close_counter + 1
         else:
             # print("close the claw !!")
-            stage = "reach_gasket_above"
+            stage = "raise_object_above"
             close_counter = 0
+        action[3] = close
+
+    elif stage == "raise_object_above":
+        if raise_counter < 8:
+            raise_counter = raise_counter + 1
+            action[2] = plus
+        else:
+            stage = "reach_gasket_above"
+            raise_counter = 0
         action[3] = close
 
     elif stage == "reach_gasket_above":
@@ -140,12 +149,12 @@ def policy(observation):
 
         if evalue_move(action_3):
             # print("reach already !!")
-            stage = "reach_gasket"
+            stage = "reach_gasket_half_above"
         else:
             action[0:3] = decide_move(action_3)
         action[3] = close
 
-    elif stage == "reach_gasket":
+    elif stage == "reach_gasket_half_above":
 
         gasket_position = observation["my_new_observation"][14:17] + [0, 0, 0.04]
 
@@ -164,8 +173,10 @@ def policy(observation):
         if open_counter < 3:
             open_counter = open_counter + 1
         else:
-            # print("close the claw !!")
-            stage = "raise_gasket_above"
+            if strategy == "pick_object_first":
+                stage = "reach_gasket"
+            else: 
+                stage = "raise_gasket_above"
             open_counter = 0
         action[3] = hand_open
 
@@ -183,6 +194,8 @@ def policy(observation):
                 stage = "close_again"
             elif strategy == "push_then_pick":
                 stage = "check"
+            else:
+                print("wrong !!!!!!!!")
         else:
             action[0:3] = decide_move(action_3)
         action[3] = hand_open
@@ -273,9 +286,89 @@ def policy(observation):
                 stage = "check"
             elif strategy == "push_then_pick":
                 stage = "reach_object_above"
+            else:
+                print("wrong !!!!!")
 
             raise_counter = 0
         action[3] = close
+
+
+#====================================================
+
+    elif stage == "reach_gasket":
+
+        gasket_position = observation["my_new_observation"][14:17]
+        gripper_position = observation["my_new_observation"][0:3]
+
+        action_3 = gasket_position - gripper_position
+
+        if evalue_move(action_3):
+            # print("go down already !!")
+            stage = "grasp_gasket_and_object"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
+
+    elif stage == "grasp_gasket_and_object":
+        # close the claw !!
+        if close_counter < 3:
+            close_counter = close_counter + 1
+        else:
+            # print("close the claw !!")
+            stage = "raise_gasket_and_object_above"
+            close_counter = 0
+        action[3] = close
+
+    elif stage == "raise_gasket_and_object_above":
+        if raise_counter < 8:
+            raise_counter = raise_counter + 1
+            action[2] = plus
+        else:
+            stage = "reach_target_above"
+            raise_counter = 0
+        action[3] = close
+
+    elif stage == "reach_target_above":
+
+        target_position = observation["my_new_observation"][23:26] + [0, 0, 0.1]
+        gasket_position = observation["my_new_observation"][14:17]
+
+        action_3 = target_position - gasket_position
+
+
+        if evalue_move(action_3):
+            # print("reach already !!")
+            stage = "reach_target_half_above"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    elif stage == "reach_target_half_above":
+
+        target_position = observation["my_new_observation"][23:26] + [0, 0, 0.02]
+        gasket_position = observation["my_new_observation"][14:17]
+
+        action_3 = target_position - gasket_position
+
+
+        if evalue_move(action_3):
+            stage = "release_gasket_and_object"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    elif stage == "release_gasket_and_object":
+
+        if open_counter < 3:
+            open_counter = open_counter + 1
+        else:
+            stage = "check"
+            open_counter = 0
+        action[3] = hand_open
+
+#====================================================
+
+
 
     elif stage == "check":
         # if failed, will loop here
@@ -311,17 +404,26 @@ strategy = "pick_then_push"
 env = gym.make('FetchPickAndPlace-v0')
 
                  
-stage_set = ["reach_object_above", "reach_object", "close", 
+stage_set = ["reach_object_above", "reach_object", "grasp_object", "raise_object_above",
 
-             "reach_gasket_above", "reach_gasket", "release", "raise_gasket_above", 
+             "reach_gasket_above", "reach_gasket_half_above", "release", 
+
+             "raise_gasket_above", 
 
              "close_again", 
 
              "reach_push_point_above", "reach_push_point", "push", "raise_push_point_above" , 
 
-             "check", "stay"]
+             "check", "stay"
 
-strategy_set = ["pick_then_push", "push_then_pick"]
+             "reach_gasket", "grasp_gasket_and_object", "raise_gasket_and_object_above",
+
+             "reach_target_above", "reach_target_half_above", "release_gasket_and_object",
+
+             ]
+
+strategy_set = ["pick_then_push", "push_then_pick",
+                "pick_object_first", "pick_gasket_first"]
 
 
 
@@ -330,18 +432,26 @@ trajectory_num = 0
 
 image_num_already_success = 0
 
-strategy = "push_then_pick"
-stage = "reach_push_point_above"
+strategy_pair = {"push_then_pick": "reach_push_point_above",
+                 "pick_then_push": "reach_object_above",
+                 "pick_object_first": "reach_object_above",}
+
+
 
 while True:
 
-    if strategy == "push_then_pick":
-        strategy = "pick_then_push"
-        stage = "reach_object_above"
+    strategy = "pick_object_first"
 
-    elif strategy == "pick_then_push":
-        strategy = "push_then_pick"
-        stage = "reach_push_point_above"
+    # if strategy == "push_then_pick":
+    #     strategy = "pick_then_push"
+
+    # elif strategy == "pick_then_push":
+    #     strategy = "pick_object_first"
+
+    # elif strategy == "pick_object_first":
+    #     strategy = "push_then_pick" 
+
+    stage = strategy_pair[strategy]
 
     observation = env.reset()
     done = False
