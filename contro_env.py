@@ -175,6 +175,8 @@ def policy(observation):
         else:
             if strategy == "pick_object_first":
                 stage = "reach_gasket"
+            elif strategy == "pick_gasket_first":
+                stage = "check"
             else: 
                 stage = "raise_gasket_above"
             open_counter = 0
@@ -295,6 +297,20 @@ def policy(observation):
 
 #====================================================
 
+    elif stage == "reach_gasket_above_for_grasp":
+
+        gasket_position = observation["my_new_observation"][14:17] + [0, 0, 0.1]
+        gripper_position = observation["my_new_observation"][0:3]
+
+        action_3 = gasket_position - gripper_position
+
+        if evalue_move(action_3):
+            # print("go down already !!")
+            stage = "reach_gasket"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
+
     elif stage == "reach_gasket":
 
         gasket_position = observation["my_new_observation"][14:17]
@@ -362,8 +378,22 @@ def policy(observation):
         if open_counter < 3:
             open_counter = open_counter + 1
         else:
-            stage = "check"
+            if strategy == "pick_object_first":
+                stage = "check"
+            elif strategy == "pick_gasket_first":
+                stage = "raise_gasket_above_again"
+            else:
+                print("wrong !!!!!!!!")
             open_counter = 0
+        action[3] = hand_open
+
+    elif stage == "raise_gasket_above_again":
+        if raise_counter < 8:
+            raise_counter = raise_counter + 1
+            action[2] = plus
+        else:
+            stage = "reach_object_above"
+            raise_counter = 0
         action[3] = hand_open
 
 #====================================================
@@ -416,9 +446,13 @@ stage_set = ["reach_object_above", "reach_object", "grasp_object", "raise_object
 
              "check", "stay"
 
+             "reach_gasket_above_for_grasp",
+
              "reach_gasket", "grasp_gasket_and_object", "raise_gasket_and_object_above",
 
              "reach_target_above", "reach_target_half_above", "release_gasket_and_object",
+
+             "raise_gasket_above_again"
 
              ]
 
@@ -434,22 +468,26 @@ image_num_already_success = 0
 
 strategy_pair = {"push_then_pick": "reach_push_point_above",
                  "pick_then_push": "reach_object_above",
-                 "pick_object_first": "reach_object_above",}
+                 "pick_object_first": "reach_object_above",
+                 "pick_gasket_first": "reach_gasket_above_for_grasp"}
 
-
+strategy = "pick_gasket_first"
 
 while True:
 
-    strategy = "pick_object_first"
+    
 
-    # if strategy == "push_then_pick":
-    #     strategy = "pick_then_push"
+    if strategy == "push_then_pick":
+        strategy = "pick_then_push"
 
-    # elif strategy == "pick_then_push":
-    #     strategy = "pick_object_first"
+    elif strategy == "pick_then_push":
+        strategy = "pick_object_first"
 
-    # elif strategy == "pick_object_first":
-    #     strategy = "push_then_pick" 
+    elif strategy == "pick_object_first":
+        strategy = "pick_gasket_first" 
+
+    elif strategy == "pick_gasket_first":
+        strategy = "push_then_pick" 
 
     stage = strategy_pair[strategy]
 
