@@ -1,6 +1,7 @@
 import pickle
 import gym
 import numpy as np
+import random
 from PIL import Image
 
 
@@ -295,7 +296,7 @@ def policy(observation):
         action[3] = close
 
 
-#====================================================
+    #====================================================
 
     elif stage == "reach_gasket_above_for_grasp":
 
@@ -396,9 +397,7 @@ def policy(observation):
             raise_counter = 0
         action[3] = hand_open
 
-#====================================================
-
-
+    #====================================================
 
     elif stage == "check":
         # if failed, will loop here
@@ -459,8 +458,6 @@ stage_set = ["reach_object_above", "reach_object", "grasp_object", "raise_object
 strategy_set = ["pick_then_push", "push_then_pick",
                 "pick_object_first", "pick_gasket_first"]
 
-
-
 data = []
 trajectory_num = 0
 
@@ -475,19 +472,16 @@ strategy = "pick_gasket_first"
 
 while True:
 
-    
-
     if strategy == "push_then_pick":
         strategy = "pick_then_push"
-
     elif strategy == "pick_then_push":
         strategy = "pick_object_first"
-
     elif strategy == "pick_object_first":
         strategy = "pick_gasket_first" 
-
     elif strategy == "pick_gasket_first":
         strategy = "push_then_pick" 
+
+    # strategy = strategy_set[random.randint(0, 3)]
 
     stage = strategy_pair[strategy]
 
@@ -507,7 +501,7 @@ while True:
     image_num = image_num_already_success
 
     # to avoid all black image
-    env.render(mode='rgb_array')
+    # env.render(mode='rgb_array')
 
     while not done:
         # saving image
@@ -558,12 +552,12 @@ while True:
 
     print(trajectory_num)
 
-    if trajectory_num == 1000:
+    if trajectory_num == 40000:
         break
 
 print("total trajectory num is : ",end="")
 print(image_num_already_success)
 
 # data = np.array(data)
-# pickle.dump(data, open("Pick-Place-Push-category-1000.p", "wb"))
+# pickle.dump(data, open("Pick-Place-Push-category-4-paths-40000.p", "wb"))
 
