@@ -21,6 +21,7 @@ def decide_move(offset):
             action[i] = fixed
     return action
 
+
 def evalue_move(offset):
     global min
     global max
@@ -71,6 +72,7 @@ def calculate_desired_goal(observation, hight):
     desired_goal[2] = bow_position[2] + hight
     return desired_goal
 
+
 def policy(observation):
     global stage
     global close_counter
@@ -89,7 +91,17 @@ def policy(observation):
 
     action = [fixed, fixed, fixed, close]
 
-    if stage == "reach_object_above":
+
+    if stage == "raise_gasket_above_again":
+        if raise_counter < 8:
+            raise_counter = raise_counter + 1
+            action[2] = plus
+        else:
+            stage = "reach_object_above"
+            raise_counter = 0
+        action[3] = hand_open
+
+    elif stage == "reach_object_above":
         # move towards the object
         # if distance > 0.03 of distance < -0.03, using 1/-1
         # else using distance exactly
@@ -99,7 +111,6 @@ def policy(observation):
         # remember:
         # CAN'T change min and max casually
         # because it should be the same to the step with classification standard step size
-
 
         if evalue_move(action_3):
             # print("reach the target !!")
@@ -179,122 +190,9 @@ def policy(observation):
             elif strategy == "pick_gasket_first":
                 stage = "check"
             else: 
-                stage = "raise_gasket_above"
+                print("wrong!!!!!!")
             open_counter = 0
         action[3] = hand_open
-
-    elif stage == "raise_gasket_above":
-        # [14:17] is bow0's position
-        gasket_position = observation["my_new_observation"][14:17] + [0, 0, 0.1]
-        # [0:3] is gripper's position
-        gripper_position = observation["my_new_observation"][0:3]
-        action_3 = gasket_position - gripper_position
-
-
-
-        if evalue_move(action_3):
-            if strategy == "pick_then_push":
-                stage = "close_again"
-            elif strategy == "push_then_pick":
-                stage = "check"
-            else:
-                print("wrong !!!!!!!!")
-        else:
-            action[0:3] = decide_move(action_3)
-        action[3] = hand_open
-
-    elif stage == "close_again":
-        # close the claw !!
-        if close_counter < 3:
-            close_counter = close_counter + 1
-        else:
-            # print("close the claw !!")
-            stage = "reach_push_point_above"
-            close_counter = 0
-        action[3] = close
-        
-    elif stage == "reach_push_point_above":
-        # calculate desired_goal
-        desired_goal = calculate_desired_goal(observation, 0.1)
-
-        # calculate current_position
-        current_position = observation["my_new_observation"][0:3]
-
-        action_3 = desired_goal - current_position
-
-
-        if evalue_move(action_3):
-            stage = "reach_push_point"
-        else:
-            action[0:3] = decide_move(action_3)
-        action[3] = close
-
-    elif stage == "reach_push_point":
-
-        # calculate desired_goal
-        desired_goal = calculate_desired_goal(observation, 0.025)
-
-        # calculate current_goal
-        current_position = observation["my_new_observation"][0:3]
-
-        action_3 = desired_goal - current_position
-
-
-        if evalue_move(action_3):
-            stage = "push"
-        else:
-            action[0:3] = decide_move(action_3)
-        action[3] = close
-
-    elif stage == "push":
-
-        if push_counter < max_push_step:
-            push_counter = push_counter + 1
-
-
-            target_position = observation["my_new_observation"][23:26]
-            current_position = observation["my_new_observation"][0:3]
-            bow_position = observation["my_new_observation"][14:17]
-
-            # use current to decide action
-            # use bowl_position to decide metric
-            # this need to think carefully
-            action_3 = target_position - current_position
-            action_3 = [ action_3[0]*0.8, action_3[1]*0.8, action_3[2]]
-            metric = target_position - bow_position
-
-            matric_min = -0.03
-            matric_max = 0.03
-            
-            # if failed, will loop here
-            if metric[0] < matric_max and metric[1] < matric_max and metric[0] > matric_min and metric[1] > matric_min:
-                # yeah !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                stage = "raise_push_point_above"
-                push_counter = 0
-            else:
-                action[0:3] = decide_move(action_3)
-            action[3] = close
-
-        else:
-            action[3] = close
-            stage = "reach_push_point"
-            push_counter = 0
-
-    elif stage == "raise_push_point_above":
-        if raise_counter < 8:
-            raise_counter = raise_counter + 1
-            action[2] = plus
-        else:
-            if strategy == "pick_then_push":
-                stage = "check"
-            elif strategy == "push_then_pick":
-                stage = "reach_object_above"
-            else:
-                print("wrong !!!!!")
-
-            raise_counter = 0
-        action[3] = close
-
 
     #====================================================
 
@@ -388,14 +286,6 @@ def policy(observation):
             open_counter = 0
         action[3] = hand_open
 
-    elif stage == "raise_gasket_above_again":
-        if raise_counter < 8:
-            raise_counter = raise_counter + 1
-            action[2] = plus
-        else:
-            stage = "reach_object_above"
-            raise_counter = 0
-        action[3] = hand_open
 
     #====================================================
 
@@ -432,30 +322,26 @@ max = step_size
 env = gym.make('FetchPickAndPlace-v0')
 
 
-stage_set = ["reach_object_above", "reach_object", "grasp_object", "raise_object_above",
+stage_set = [
+             "raise_gasket_above_again"
 
+
+             "reach_object_above", "reach_object", "grasp_object", "raise_object_above",
              "reach_gasket_above", "reach_gasket_half_above", "release", 
 
-             "raise_gasket_above", 
 
-             "close_again", 
+             "reach_gasket_above_for_grasp", 
 
-             "reach_push_point_above", "reach_push_point", "push", "raise_push_point_above" , 
+
+             "reach_gasket", "grasp_gasket_and_object", "raise_gasket_and_object_above",
+             "reach_target_above", "reach_target_half_above", "release_gasket_and_object",
+
 
              "check", "stay"
 
-             "reach_gasket_above_for_grasp",
-
-             "reach_gasket", "grasp_gasket_and_object", "raise_gasket_and_object_above",
-
-             "reach_target_above", "reach_target_half_above", "release_gasket_and_object",
-
-             "raise_gasket_above_again"
-
              ]
 
-strategy_set = ["pick_then_push", "push_then_pick",
-                "pick_object_first", "pick_gasket_first"]
+strategy_set = ["pick_object_first", "pick_gasket_first"]
 
 
 data = []
@@ -463,23 +349,18 @@ trajectory_num = 0
 
 image_num_already_success = 0
 
-strategy_pair = {"push_then_pick": "reach_push_point_above",
-                 "pick_then_push": "reach_object_above",
-                 "pick_object_first": "reach_object_above",
+strategy_pair = {"pick_object_first": "reach_object_above",
                  "pick_gasket_first": "reach_gasket_above_for_grasp"}
 
-strategy = "pick_then_push"
+strategy = "pick_object_first"
 
 while True:
 
-    # if strategy == "push_then_pick":
-    #     strategy = "pick_then_push"
-    # elif strategy == "pick_then_push":
-    #     strategy = "pick_object_first"
-    # elif strategy == "pick_object_first":
-    #     strategy = "pick_gasket_first" 
-    # elif strategy == "pick_gasket_first":
-    #     strategy = "push_then_pick" 
+    if strategy == "pick_object_first":
+        strategy = "pick_gasket_first"
+    elif strategy == "pick_gasket_first":
+        strategy = "pick_object_first"
+    
 
     # strategy = strategy_set[random.randint(0, 3)]
 
@@ -493,22 +374,16 @@ while True:
 
     # gripper position
     exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
-
     # object_0 position
     exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-
     # object_1 position
     exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
-
     # bow_0 position
     exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
-
     # bow_1 position
     exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
-
     # goal_0 position
     exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
-
     # goal_1 position
     exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
 
@@ -565,22 +440,16 @@ while True:
 
         # gripper position
         exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
-
         # object_0 position
         exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-
         # object_1 position
         exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
-
         # bow_0 position
         exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
-
         # bow_1 position
         exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
-
         # goal_0 position
         exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
-
         # goal_1 position
         exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
         

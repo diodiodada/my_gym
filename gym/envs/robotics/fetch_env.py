@@ -205,7 +205,7 @@ class FetchEnv(robot_env.RobotEnv):
             for name_string in ['object0:joint', 'object1:joint', 'bow0:joint', 'bow1:joint']:
 
                 if i > 1:
-                    delta = 0.11
+                    delta = 0.15
                     init_x = -0.04
                     position_list = [[init_x,       0.0], 
                                     [init_x,        +delta], 
