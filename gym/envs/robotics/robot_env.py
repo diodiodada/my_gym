@@ -37,8 +37,8 @@ class RobotEnv(gym.GoalEnv):
         self.object_position = np.random.permutation(9)
 
         self.goal = self._sample_goal()
-        self.goal_1 = self._sample_goal_1()
-        self.goal_2 = self._sample_goal_2()
+        # self.goal_1 = self._sample_goal_1()
+        # self.goal_2 = self._sample_goal_2()
 
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
@@ -86,8 +86,8 @@ class RobotEnv(gym.GoalEnv):
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
         self.goal = self._sample_goal().copy()
-        self.goal_1 = self._sample_goal_1().copy()
-        self.goal_2 = self._sample_goal_2().copy()
+        # self.goal_1 = self._sample_goal_1().copy()
+        # self.goal_2 = self._sample_goal_2().copy()
         obs = self._get_obs()
         return obs
 
@@ -112,6 +112,12 @@ class RobotEnv(gym.GoalEnv):
         if self.viewer is None:
             self.viewer = mujoco_py.MjViewer(self.sim)
             self._viewer_setup()
+
+            self.viewer.sim.model.geom_rgba[1, 3] = 0
+            self.viewer.sim.model.geom_rgba[2, 3] = 0
+            self.viewer.sim.model.geom_rgba[3, 3] = 0
+            self.viewer.sim.model.geom_rgba[4, 3] = 0
+
         return self.viewer
 
     # Extension methods
