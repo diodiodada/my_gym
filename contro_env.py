@@ -73,6 +73,116 @@ def calculate_desired_goal(observation, hight):
     return desired_goal
 
 
+def pick_and_place(position_claw, position_object, position_target):
+    # suppose the claw already at standard height
+
+    global stage
+    global close_counter
+    global open_counter
+    global raise_counter
+    
+    plus = 2
+    minus = 1
+    fixed = 0
+    hand_open = 1
+    close = 0
+    success = False
+
+    action = [fixed, fixed, fixed, close]
+
+    # stpe_1: reach_object_above (open hand)
+    if stage == "reach_object_above":
+        action_3 = position_object - position_claw
+        action_3[2] = action_3[2] + 0.07
+
+        if evalue_move(action_3):
+            stage = "reach_object"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
+
+    # step_2: reach_object (open hand)
+    elif stage == "reach_object":
+
+        action_3 = position_object - position_claw
+        action_3[2] = action_3[2] + 0.0
+
+        if evalue_move(action_3):
+            stage = "grasp_object"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
+
+    # step_3: grasp_object (close hand)
+    elif stage == "grasp_object":
+        if close_counter < 3:
+            close_counter = close_counter + 1
+        else:
+            stage = "raise_object_up"
+            close_counter = 0
+        action[3] = close
+
+    # step_4: raise_object_up (close hand)
+    elif stage == "raise_object_up":
+        if raise_counter < 8:
+            raise_counter = raise_counter + 1
+            action[2] = plus
+        else:
+            stage = "reach_target_above"
+            raise_counter = 0
+        action[3] = close
+
+    # step_5: reach_target_above (close hand)
+    elif stage == "reach_target_above":
+
+        action_3 = position_target - position_object
+        action_3[2] = action_3[2] + 0.1
+
+        if evalue_move(action_3):
+            stage = "lower_object"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    # step_6: lower_object (close hand)
+    elif stage == "lower_object":
+
+        action_3 = position_target - position_object
+        action_3[2] = action_3[2] + 0.04
+
+
+        if evalue_move(action_3):
+            stage = "release_object"
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = close
+
+    # step_7: release_object (open hand)
+    elif stage == "release_object":
+
+        if open_counter < 3:
+            open_counter = open_counter + 1
+        else:
+            stage = "raise_claw_up"
+            open_counter = 0
+        action[3] = hand_open
+
+    # step_8: raise_claw_up (open hand)
+    elif stage == "raise_claw_up":
+
+        if raise_counter < 8:
+            raise_counter = raise_counter + 1
+            action[2] = plus
+        else:
+            stage = "finish"
+            raise_counter = 0
+            success = True
+        action[3] = hand_open
+
+
+    return action, success
+
+
 def policy(observation):
     global stage
     global close_counter
@@ -91,6 +201,7 @@ def policy(observation):
 
     action = [fixed, fixed, fixed, close]
 
+    # ======================== p_1 to e_1===========================
 
     if stage == "raise_gasket_above_again":
         if raise_counter < 8:
@@ -100,6 +211,8 @@ def policy(observation):
             stage = "reach_object_above"
             raise_counter = 0
         action[3] = hand_open
+
+    # ======================== e_1 to p_2/p_3=============================
 
     elif stage == "reach_object_above":
         # move towards the object
@@ -194,7 +307,7 @@ def policy(observation):
             open_counter = 0
         action[3] = hand_open
 
-    #====================================================
+    # ======================= e_2 to p_2============================
 
     elif stage == "reach_gasket_above_for_grasp":
 
@@ -209,6 +322,8 @@ def policy(observation):
         else:
             action[0:3] = decide_move(action_3)
         action[3] = hand_open
+
+    # ======================= p_2 to p_3/p_1============================
 
     elif stage == "reach_gasket":
 
@@ -286,8 +401,7 @@ def policy(observation):
             open_counter = 0
         action[3] = hand_open
 
-
-    #====================================================
+    # ======================= p_3 ============================
 
     elif stage == "check":
         # if failed, will loop here
@@ -356,15 +470,17 @@ strategy = "pick_object_first"
 
 while True:
 
-    if strategy == "pick_object_first":
-        strategy = "pick_gasket_first"
-    elif strategy == "pick_gasket_first":
-        strategy = "pick_object_first"
+    # if strategy == "pick_object_first":
+    #     strategy = "pick_gasket_first"
+    # elif strategy == "pick_gasket_first":
+    #     strategy = "pick_object_first"
     
 
     # strategy = strategy_set[random.randint(0, 3)]
 
-    stage = strategy_pair[strategy]
+    # stage = strategy_pair[strategy]
+
+    stage = "reach_object_above"
 
     observation = env.reset()
     done = False
@@ -373,18 +489,31 @@ while True:
     exbanded_reduced_new_obs = np.zeros((32,))
 
     # gripper position
+    gripper_position = observation["my_new_observation"][0:3]
     exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
+
     # object_0 position
+    object_0_position = observation["my_new_observation"][5:8]
     exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
+
     # object_1 position
+    object_1_position = observation["my_new_observation"][8:11]
     exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
+
     # bow_0 position
+    bow_0_position = observation["my_new_observation"][11:14]
     exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
+
     # bow_1 position
+    bow_1_position = observation["my_new_observation"][14:17]
     exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
+
     # goal_0 position
+    goal_0_position = observation["my_new_observation"][17:20]
     exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
+
     # goal_1 position
+    goal_1_position = observation["my_new_observation"][20:23]
     exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
 
     observation["my_new_observation"] = exbanded_reduced_new_obs
@@ -415,7 +544,8 @@ while True:
         # NOT saving image
         env.render()
 
-        action_category, success = policy(observation)
+        # action_category, success = policy(observation)
+        action_category, success = pick_and_place(gripper_position, object_0_position, bow_0_position)
 
         action = np.zeros((4))
 
@@ -439,18 +569,31 @@ while True:
         exbanded_reduced_new_obs = np.zeros((32,))
 
         # gripper position
+        gripper_position = observation["my_new_observation"][0:3]
         exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
+
         # object_0 position
+        object_0_position = observation["my_new_observation"][5:8]
         exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
+
         # object_1 position
+        object_1_position = observation["my_new_observation"][8:11]
         exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
+
         # bow_0 position
+        bow_0_position = observation["my_new_observation"][11:14]
         exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
+
         # bow_1 position
+        bow_1_position = observation["my_new_observation"][14:17]
         exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
+
         # goal_0 position
+        goal_0_position = observation["my_new_observation"][17:20]
         exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
+
         # goal_1 position
+        goal_1_position = observation["my_new_observation"][20:23]
         exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
         
         observation["my_new_observation"] = exbanded_reduced_new_obs
