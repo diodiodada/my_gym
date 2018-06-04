@@ -37,7 +37,7 @@ class RobotEnv(gym.GoalEnv):
         self.object_position = np.random.permutation(9)
 
         self.goal = self._sample_goal()
-        # self.goal_1 = self._sample_goal_1()
+        self.goal_1 = self._sample_goal_1()
         # self.goal_2 = self._sample_goal_2()
 
         obs = self._get_obs()
@@ -86,7 +86,7 @@ class RobotEnv(gym.GoalEnv):
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
         self.goal = self._sample_goal().copy()
-        # self.goal_1 = self._sample_goal_1().copy()
+        self.goal_1 = self._sample_goal_1().copy()
         # self.goal_2 = self._sample_goal_2().copy()
         obs = self._get_obs()
         return obs
