@@ -94,11 +94,11 @@ class FetchEnv(robot_env.RobotEnv):
 
         if self.has_object:
             object_pos = self.sim.data.get_site_xpos('object0')
-            # object_1_pos = self.sim.data.get_site_xpos('object1')
-            # object_2_pos = self.sim.data.get_site_xpos('object2')
+            object_1_pos = self.sim.data.get_site_xpos('object1')
+            object_2_pos = self.sim.data.get_site_xpos('object2')
             bow_0_pos = self.sim.data.get_site_xpos('bow0')
-            # bow_1_pos = self.sim.data.get_site_xpos('bow1')
-            # bow_2_pos = self.sim.data.get_site_xpos('bow2')
+            bow_1_pos = self.sim.data.get_site_xpos('bow1')
+            bow_2_pos = self.sim.data.get_site_xpos('bow2')
 
 
             # rotations
@@ -129,13 +129,9 @@ class FetchEnv(robot_env.RobotEnv):
         ])
 
         my_new_observation = np.concatenate([grip_pos, gripper_state, 
-                                            object_pos, 
-                                            # object_1_pos, object_2_pos,
-                                            bow_0_pos, 
-                                            # bow_1_pos, bow_2_pos,
-                                            self.goal, 
-                                            # self.goal_1, self.goal_2
-                                            ])
+                                            object_pos, object_1_pos, object_2_pos,
+                                            bow_0_pos, bow_1_pos, bow_2_pos,
+                                            self.goal, self.goal_1, self.goal_2])
 
         # print(my_new_observation)
         # print("")
@@ -157,8 +153,8 @@ class FetchEnv(robot_env.RobotEnv):
             self.viewer.cam.lookat[idx] = value
 
         self.viewer.cam.distance = 1.2
-        self.viewer.cam.azimuth = 180.
-        self.viewer.cam.elevation = -60.
+        self.viewer.cam.azimuth = 90.
+        self.viewer.cam.elevation = -50.
 
     def _render_callback(self):
         # Visualize target.
@@ -167,11 +163,11 @@ class FetchEnv(robot_env.RobotEnv):
         site_id = self.sim.model.site_name2id('target0')
         self.sim.model.site_pos[site_id] = self.goal - sites_offset[0]
 
-        # site_id = self.sim.model.site_name2id('target1')
-        # self.sim.model.site_pos[site_id] = self.goal_1 - sites_offset[0]
+        site_id = self.sim.model.site_name2id('target1')
+        self.sim.model.site_pos[site_id] = self.goal_1 - sites_offset[0]
 
-        # site_id = self.sim.model.site_name2id('target2')
-        # self.sim.model.site_pos[site_id] = self.goal_2 - sites_offset[0]
+        site_id = self.sim.model.site_name2id('target2')
+        self.sim.model.site_pos[site_id] = self.goal_2 - sites_offset[0]
 
         self.sim.forward()
 
@@ -198,10 +194,9 @@ class FetchEnv(robot_env.RobotEnv):
 
             i = 0
 
-            # for name_string in ['object0:joint', 'object1:joint', 'object2:joint', 'bow0:joint', 'bow1:joint', 'bow2:joint']:
-            for name_string in ['object0:joint',  'bow0:joint']:
+            for name_string in ['object0:joint', 'object1:joint', 'object2:joint', 'bow0:joint', 'bow1:joint', 'bow2:joint']:
 
-                if i > 0:
+                if i > 2:
                     delta = 0.11
                     init_x = -0.04
                     position_list = [[init_x,       0.0], 

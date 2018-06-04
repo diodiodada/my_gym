@@ -428,10 +428,11 @@ push_counter = 0
 raise_counter = 0
 min = -step_size
 max = step_size
+strategy = "pick_then_push"
 
 env = gym.make('FetchPickAndPlace-v0')
 
-
+                 
 stage_set = ["reach_object_above", "reach_object", "grasp_object", "raise_object_above",
 
              "reach_gasket_above", "reach_gasket_half_above", "release", 
@@ -457,7 +458,6 @@ stage_set = ["reach_object_above", "reach_object", "grasp_object", "raise_object
 strategy_set = ["pick_then_push", "push_then_pick",
                 "pick_object_first", "pick_gasket_first"]
 
-
 data = []
 trajectory_num = 0
 
@@ -468,18 +468,18 @@ strategy_pair = {"push_then_pick": "reach_push_point_above",
                  "pick_object_first": "reach_object_above",
                  "pick_gasket_first": "reach_gasket_above_for_grasp"}
 
-strategy = "pick_then_push"
+strategy = "pick_gasket_first"
 
 while True:
 
-    # if strategy == "push_then_pick":
-    #     strategy = "pick_then_push"
-    # elif strategy == "pick_then_push":
-    #     strategy = "pick_object_first"
-    # elif strategy == "pick_object_first":
-    #     strategy = "pick_gasket_first" 
-    # elif strategy == "pick_gasket_first":
-    #     strategy = "push_then_pick" 
+    if strategy == "push_then_pick":
+        strategy = "pick_then_push"
+    elif strategy == "pick_then_push":
+        strategy = "pick_object_first"
+    elif strategy == "pick_object_first":
+        strategy = "pick_gasket_first" 
+    elif strategy == "pick_gasket_first":
+        strategy = "push_then_pick" 
 
     # strategy = strategy_set[random.randint(0, 3)]
 
@@ -488,13 +488,6 @@ while True:
     observation = env.reset()
     done = False
     # print(observation)
-
-    exbanded_reduced_new_obs = np.zeros((32,))
-    exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
-    exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-    exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][8:11]
-    exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][11:14]
-    observation["my_new_observation"] = exbanded_reduced_new_obs
 
     plus = 2
     minus = 1
@@ -516,7 +509,7 @@ while True:
         # image = Image.fromarray(image)
         # w, h = image.size
         # image = image.resize((w//4, h//4),Image.ANTIALIAS)  
-        # image.save('images_'+strategy+'/'+ str(image_num) +'.jpg', 'jpeg')
+        # image.save('images/'+ str(image_num) +'.jpg', 'jpeg')
         # image_num += 1
 
         # NOT saving image
@@ -543,13 +536,6 @@ while True:
         previous_observation = observation
         observation, reward, done, info = env.step(action)
 
-        exbanded_reduced_new_obs = np.zeros((32,))
-        exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
-        exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-        exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][8:11]
-        exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][11:14]
-        observation["my_new_observation"] = exbanded_reduced_new_obs
-
         one_step = []
         one_step.extend(previous_observation["my_new_observation"])
         one_step.extend(action_category)
@@ -566,12 +552,12 @@ while True:
 
     print(trajectory_num)
 
-    if trajectory_num == 200:
+    if trajectory_num == 40000:
         break
 
 print("total trajectory num is : ",end="")
 print(image_num_already_success)
 
 # data = np.array(data)
-# pickle.dump(data, open("PPP"+strategy+"-200.p", "wb"))
+# pickle.dump(data, open("Pick-Place-Push-category-4-paths-40000.p", "wb"))
 
