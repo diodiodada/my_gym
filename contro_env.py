@@ -490,10 +490,28 @@ while True:
     # print(observation)
 
     exbanded_reduced_new_obs = np.zeros((32,))
+
+    # gripper position
     exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
+
+    # object_0 position
     exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-    exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][8:11]
-    exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][11:14]
+
+    # object_1 position
+    exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
+
+    # bow_0 position
+    exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
+
+    # bow_1 position
+    exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
+
+    # goal_0 position
+    exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
+
+    # goal_1 position
+    exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
+
     observation["my_new_observation"] = exbanded_reduced_new_obs
 
     plus = 2
@@ -544,10 +562,28 @@ while True:
         observation, reward, done, info = env.step(action)
 
         exbanded_reduced_new_obs = np.zeros((32,))
+
+        # gripper position
         exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
+
+        # object_0 position
         exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-        exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][8:11]
-        exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][11:14]
+
+        # object_1 position
+        exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
+
+        # bow_0 position
+        exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
+
+        # bow_1 position
+        exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
+
+        # goal_0 position
+        exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
+
+        # goal_1 position
+        exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
+        
         observation["my_new_observation"] = exbanded_reduced_new_obs
 
         one_step = []
