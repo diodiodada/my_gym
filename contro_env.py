@@ -37,7 +37,6 @@ def pick_and_place(position_claw, position_object, position_target):
     global stage
     global close_counter
     global open_counter
-    global raise_counter
     global ground_height
 
     
@@ -153,19 +152,16 @@ def subtask_decide(strategy_id,
 
 
 # Hyper parameters
-max_push_step = 6
-push_point_distance = 0.07
 step_size = 0.01
 
 
 # global parameters
 close_counter = 0
 open_counter = 0
-push_counter = 0
-raise_counter = 0
 min = -step_size
 max = step_size
 ground_height = 0.0
+stage = "reach_object_above"
 
 
 env = gym.make('FetchPickAndPlace-v0')
@@ -173,6 +169,8 @@ env = gym.make('FetchPickAndPlace-v0')
 
 def make_trajectory(index):
 
+    global stage
+    global ground_height
 
     data = []
     trajectory_num = 0
