@@ -31,48 +31,6 @@ def evalue_move(offset):
         return False
 
 
-def calculate_desired_goal(observation, hight):
-    global push_point_distance
-    target_position = observation["my_new_observation"][23:26]
-    bow_position = observation["my_new_observation"][14:17]
-
-    delta = target_position - bow_position
-    ratio = abs(delta[1]/delta[0])
-    if delta[0] < 0:
-        x_sign = -1
-    else:
-        x_sign = 1
-
-    if delta[1] < 0:
-        y_sign = -1
-    else:
-        y_sign = 1 
-
-    if ratio > 8:
-        abs_delta = [0, 1]
-    elif ratio > 8/3:
-        abs_delta = [2/8, 1]
-    elif ratio > 8/5:
-        abs_delta = [4/8, 1]
-    elif ratio > 8/7:
-        abs_delta = [6/8, 1]
-    elif ratio > 7/8:
-        abs_delta = [1, 8/8]
-    elif ratio > 5/8:
-        abs_delta = [1, 6/8]
-    elif ratio > 3/8:
-        abs_delta = [1, 4/8]
-    elif ratio > 1/8:
-        abs_delta = [1, 2/8]
-    else:
-        abs_delta = [1, 0]
-
-    delta_ac = [abs_delta[0]*x_sign*push_point_distance, abs_delta[1]*y_sign*push_point_distance, 0]
-    desired_goal = bow_position - delta_ac
-    desired_goal[2] = bow_position[2] + hight
-    return desired_goal
-
-
 def pick_and_place(position_claw, position_object, position_target):
     # suppose the claw already at standard height
 
@@ -80,6 +38,8 @@ def pick_and_place(position_claw, position_object, position_target):
     global close_counter
     global open_counter
     global raise_counter
+    global ground_height
+
     
     plus = 2
     minus = 1
@@ -92,8 +52,7 @@ def pick_and_place(position_claw, position_object, position_target):
 
     # stpe_1: reach_object_above (open hand)
     if stage == "reach_object_above":
-        action_3 = position_object - position_claw
-        action_3[2] = action_3[2] + 0.07
+        action_3 = position_object - position_claw + [0, 0, 0.1]
 
         if evalue_move(action_3):
             stage = "reach_object"
@@ -105,7 +64,6 @@ def pick_and_place(position_claw, position_object, position_target):
     elif stage == "reach_object":
 
         action_3 = position_object - position_claw
-        action_3[2] = action_3[2] + 0.0
 
         if evalue_move(action_3):
             stage = "grasp_object"
@@ -124,19 +82,19 @@ def pick_and_place(position_claw, position_object, position_target):
 
     # step_4: raise_object_up (close hand)
     elif stage == "raise_object_up":
-        if raise_counter < 8:
-            raise_counter = raise_counter + 1
-            action[2] = plus
-        else:
+
+        action_3 = [0, 0, ground_height + 0.1 - position_claw[2] ]
+
+        if evalue_move(action_3):
             stage = "reach_target_above"
-            raise_counter = 0
+        else:
+            action[0:3] = decide_move(action_3)
         action[3] = close
 
     # step_5: reach_target_above (close hand)
     elif stage == "reach_target_above":
 
-        action_3 = position_target - position_object
-        action_3[2] = action_3[2] + 0.1
+        action_3 = position_target - position_object + [0, 0, 0.1]
 
         if evalue_move(action_3):
             stage = "lower_object"
@@ -147,9 +105,7 @@ def pick_and_place(position_claw, position_object, position_target):
     # step_6: lower_object (close hand)
     elif stage == "lower_object":
 
-        action_3 = position_target - position_object
-        action_3[2] = action_3[2] + 0.04
-
+        action_3 = position_target - position_object + [0, 0, 0.04]
 
         if evalue_move(action_3):
             stage = "release_object"
@@ -170,15 +126,14 @@ def pick_and_place(position_claw, position_object, position_target):
     # step_8: raise_claw_up (open hand)
     elif stage == "raise_claw_up":
 
-        if raise_counter < 8:
-            raise_counter = raise_counter + 1
-            action[2] = plus
-        else:
-            stage = "finish"
-            raise_counter = 0
-            success = True
-        action[3] = hand_open
+        action_3 = [0, 0, ground_height + 0.1 - position_claw[2] ]
 
+        if evalue_move(action_3):
+            stage = "inside_finish"
+            success = True
+        else:
+            action[0:3] = decide_move(action_3)
+        action[3] = hand_open
 
     return action, success
 
@@ -432,98 +387,57 @@ push_counter = 0
 raise_counter = 0
 min = -step_size
 max = step_size
+ground_height = 0.0
+
 
 env = gym.make('FetchPickAndPlace-v0')
 
-
-stage_set = [
-             "raise_gasket_above_again"
-
+stage_set = ["raise_gasket_above_again"
 
              "reach_object_above", "reach_object", "grasp_object", "raise_object_above",
              "reach_gasket_above", "reach_gasket_half_above", "release", 
 
-
              "reach_gasket_above_for_grasp", 
-
 
              "reach_gasket", "grasp_gasket_and_object", "raise_gasket_and_object_above",
              "reach_target_above", "reach_target_half_above", "release_gasket_and_object",
 
-
-             "check", "stay"
-
-             ]
+             "check", "stay"]
 
 strategy_set = ["pick_object_first", "pick_gasket_first"]
-
 
 data = []
 trajectory_num = 0
 
 image_num_already_success = 0
 
-strategy_pair = {"pick_object_first": "reach_object_above",
-                 "pick_gasket_first": "reach_gasket_above_for_grasp"}
 
 strategy = "pick_object_first"
 
 while True:
 
-    # if strategy == "pick_object_first":
-    #     strategy = "pick_gasket_first"
-    # elif strategy == "pick_gasket_first":
-    #     strategy = "pick_object_first"
-    
-
-    # strategy = strategy_set[random.randint(0, 3)]
-
-    # stage = strategy_pair[strategy]
 
     stage = "reach_object_above"
+    stage_outside = "step_1"
 
     observation = env.reset()
     done = False
-    # print(observation)
 
-    exbanded_reduced_new_obs = np.zeros((32,))
-
-    # gripper position
     gripper_position = observation["my_new_observation"][0:3]
-    exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
-
-    # object_0 position
     object_0_position = observation["my_new_observation"][5:8]
-    exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-
-    # object_1 position
     object_1_position = observation["my_new_observation"][8:11]
-    exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
-
-    # bow_0 position
     bow_0_position = observation["my_new_observation"][11:14]
-    exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
-
-    # bow_1 position
     bow_1_position = observation["my_new_observation"][14:17]
-    exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
-
-    # goal_0 position
     goal_0_position = observation["my_new_observation"][17:20]
-    exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
-
-    # goal_1 position
     goal_1_position = observation["my_new_observation"][20:23]
-    exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
-
-    observation["my_new_observation"] = exbanded_reduced_new_obs
 
     plus = 2
     minus = 1
     fixed = 0
-
     hand_open = 1
     close = 0
+
+    ground_height = object_0_position[2]
 
     one_trajectory = []
 
@@ -533,6 +447,7 @@ while True:
     # env.render(mode='rgb_array')
 
     while not done:
+
         # saving image
         # image = env.render(mode='rgb_array')
         # image = Image.fromarray(image)
@@ -544,8 +459,26 @@ while True:
         # NOT saving image
         env.render()
 
-        # action_category, success = policy(observation)
-        action_category, success = pick_and_place(gripper_position, object_0_position, bow_0_position)
+        if stage_outside == "step_1":
+            action_category, success = pick_and_place(gripper_position, object_0_position, bow_0_position)
+            if success:
+                stage_outside = "step_2"
+                stage = "reach_object_above"
+        elif stage_outside == "step_2":
+            action_category, success = pick_and_place(gripper_position, object_1_position, bow_1_position)
+            if success:
+                stage_outside = "step_3"
+                stage = "reach_object_above"
+        elif stage_outside == "step_3":
+            action_category, success = pick_and_place(gripper_position, bow_0_position, goal_0_position)
+            if success:
+                stage_outside = "step_4"
+                stage = "reach_object_above"
+        elif stage_outside == "step_4":
+            action_category, success = pick_and_place(gripper_position, bow_1_position, goal_1_position)
+            if success:
+                stage_outside = "outside_finish"
+                stage = "reach_object_above"
 
         action = np.zeros((4))
 
@@ -566,38 +499,14 @@ while True:
         previous_observation = observation
         observation, reward, done, info = env.step(action)
 
-        exbanded_reduced_new_obs = np.zeros((32,))
-
-        # gripper position
         gripper_position = observation["my_new_observation"][0:3]
-        exbanded_reduced_new_obs[0:5] = observation["my_new_observation"][0:5]
-
-        # object_0 position
         object_0_position = observation["my_new_observation"][5:8]
-        exbanded_reduced_new_obs[5:8] = observation["my_new_observation"][5:8]
-
-        # object_1 position
         object_1_position = observation["my_new_observation"][8:11]
-        exbanded_reduced_new_obs[8:11] = observation["my_new_observation"][8:11]
-
-        # bow_0 position
         bow_0_position = observation["my_new_observation"][11:14]
-        exbanded_reduced_new_obs[14:17] = observation["my_new_observation"][11:14]
-
-        # bow_1 position
         bow_1_position = observation["my_new_observation"][14:17]
-        exbanded_reduced_new_obs[17:20] = observation["my_new_observation"][14:17]
-
-        # goal_0 position
         goal_0_position = observation["my_new_observation"][17:20]
-        exbanded_reduced_new_obs[23:26] = observation["my_new_observation"][17:20]
-
-        # goal_1 position
         goal_1_position = observation["my_new_observation"][20:23]
-        exbanded_reduced_new_obs[26:29] = observation["my_new_observation"][20:23]
         
-        observation["my_new_observation"] = exbanded_reduced_new_obs
-
         one_step = []
         one_step.extend(previous_observation["my_new_observation"])
         one_step.extend(action_category)
@@ -605,7 +514,7 @@ while True:
         one_step.extend([float(success)])
         one_trajectory.append(one_step)
 
-        if success:
+        if stage_outside == "outside_finish":
             data.extend(one_trajectory)
             trajectory_num += 1
             image_num_already_success += len(one_trajectory)

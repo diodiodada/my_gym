@@ -323,7 +323,7 @@ for reward_type in ['sparse', 'dense']:
         id='FetchPickAndPlace{}-v0'.format(suffix),
         entry_point='gym.envs.robotics:FetchPickAndPlaceEnv',
         kwargs=kwargs,
-        max_episode_steps=200,
+        max_episode_steps=400,
     )
 
     register(
