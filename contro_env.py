@@ -314,7 +314,7 @@ def make_trajectory(index):
     print(image_num_already_success)
 
     data = np.array(data)
-    pickle.dump(data, open("PP-24-paths-"+str(trajectory_num)+"-"+tra(index)+".p", "wb"))
+    pickle.dump(data, open("PP-24-paths-"+str(trajectory_num)+"-"+str(index)+".p", "wb"))
 
 
 for i in range(10):
