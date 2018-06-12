@@ -3,7 +3,7 @@ import gym
 import numpy as np
 import random
 from PIL import Image
-
+from itertools import permutations
 
 def decide_move(offset):
     global min
@@ -151,6 +151,24 @@ def subtask_decide(strategy_id,
         return bow_1_position, goal_1_position
 
 
+def check(object_0_position, object_1_position, 
+            bow_0_position, bow_1_position, 
+            goal_0_position, goal_1_position):
+    a = object_0_position - bow_0_position
+    b = object_1_position - bow_1_position
+    c = bow_0_position - goal_0_position
+    d = bow_1_position - goal_1_position
+
+    result = np.concatenate((a, b, c, d), axis=-1)
+
+    for i in range(result.shape[0]):
+        if result[i] < 0.1:
+            pass
+        else:
+            return False
+    return True
+    
+
 # Hyper parameters
 step_size = 0.01
 
@@ -167,7 +185,7 @@ stage = "reach_object_above"
 env = gym.make('FetchPickAndPlace-v0')
 
 
-def make_trajectory(index):
+def make_trajectory(strategy, desired_num):
 
     global stage
     global ground_height
@@ -208,7 +226,7 @@ def make_trajectory(index):
 
         image_num = image_num_already_success
 
-        strategy = np.random.permutation(4)
+        # strategy = np.random.permutation(4)
 
         # to avoid all black image
         # env.render(mode='rgb_array')
@@ -224,7 +242,7 @@ def make_trajectory(index):
             # image_num += 1
 
             # NOT saving image
-            # env.render()
+            env.render()
 
             if stage_outside == "step_1":
                 ob, tar = subtask_decide(strategy[0], 
@@ -299,24 +317,36 @@ def make_trajectory(index):
             one_trajectory.append(one_step)
 
             if stage_outside == "outside_finish":
-                data.extend(one_trajectory)
-                trajectory_num += 1
-                image_num_already_success += len(one_trajectory)
+                
+
+                if check(object_0_position, object_1_position, 
+                        bow_0_position, bow_1_position, 
+                        goal_0_position, goal_1_position):
+
+                    data.extend(one_trajectory)
+                    trajectory_num += 1
+                    image_num_already_success += len(one_trajectory)
+                
                 break
 
 
         print(trajectory_num)
 
-        if trajectory_num == 2400:
+        if trajectory_num == desired_num:
             break
 
     print("total trajectory num is : ",end="")
     print(image_num_already_success)
 
     data = np.array(data)
-    pickle.dump(data, open("PP-24-paths-"+str(trajectory_num)+"-"+str(index)+".p", "wb"))
+    pickle.dump(data, open("PP-1-paths-"+str(desired_num)+"-"+str(strategy)+".p", "wb"))
 
 
-for i in range(10):
-    make_trajectory(i)
 
+# a = [0, 1, 2, 3]
+# for perm in permutations(a):
+#     print("strategy:", list(perm))
+#     make_trajectory(list(perm), 20)
+
+
+make_trajectory([0, 1, 2, 3], 10000)

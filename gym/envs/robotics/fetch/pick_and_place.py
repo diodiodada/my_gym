@@ -25,6 +25,7 @@ class FetchPickAndPlaceEnv(fetch_env.FetchEnv, utils.EzPickle):
             obj_range=0.035, target_range=0.035, distance_threshold=0.05,
             initial_qpos=initial_qpos, reward_type=reward_type)
 
+
         # fetch_env.FetchEnv.__init__(
         #     self, 'fetch/pick_and_place.xml', has_object=True, block_gripper=False, n_substeps=20,
         #     gripper_extra_height=0.2, target_in_the_air=False, target_offset=0.0,

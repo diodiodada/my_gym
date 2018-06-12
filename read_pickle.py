@@ -1,34 +1,33 @@
 import pickle
 import numpy as np
 
-for index in range(10):
-	data = pickle.load(open('PP-24-paths-2400-'+str(index)+'.p', 'rb'))
+data = pickle.load(open('PP-24-paths-24000.p', 'rb'))
 
-	num_trajectory = 0
+num_trajectory = 0
 
-	# average_length = 0
+# average_length = 0
 
-	last_index = 0
+last_index = 0
 
-	num_length = []
-	for i in range(data.shape[0]):
-		if data[i, -1] == 1.0:
+num_length = []
+for i in range(data.shape[0]):
+	if data[i, -1] == 1.0:
 
-			# print(i)
+		# print(i)
 
-			num_trajectory += 1
-			length = i - last_index + 1
-			num_length.append(length)
+		num_trajectory += 1
+		length = i - last_index + 1
+		num_length.append(length)
 
-			last_index = i + 1
+		last_index = i + 1
 
-	num_length = np.array(num_length)
+num_length = np.array(num_length)
 
-	# print("mean:", num_length.mean(), 
-	# 	  "variance:", num_length.var(), 
-	# 	  "max:",num_length.max(), 
-	# 	  "min:",num_length.min())
+print("mean:", num_length.mean(), 
+	  "variance:", num_length.var(), 
+	  "max:",num_length.max(), 
+	  "min:",num_length.min())
 
-	# print(num_trajectory)
-	print(data.shape)
-	print("")
+print(num_trajectory)
+print(data.shape)
+print("")

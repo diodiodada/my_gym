@@ -81,6 +81,7 @@ class RobotEnv(gym.GoalEnv):
         # configuration.
         
         self.object_position = np.random.permutation(9)
+        # self.object_position = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
         did_reset_sim = False
         while not did_reset_sim:
