@@ -349,4 +349,4 @@ def make_trajectory(strategy, desired_num):
 #     make_trajectory(list(perm), 20)
 
 
-make_trajectory([0, 1, 2, 3], 10000)
+make_trajectory([2, 3, 0, 1], 10000)
