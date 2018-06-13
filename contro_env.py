@@ -468,7 +468,7 @@ strategy_pair = {"push_then_pick": "reach_push_point_above",
                  "pick_object_first": "reach_object_above",
                  "pick_gasket_first": "reach_gasket_above_for_grasp"}
 
-strategy = "pick_then_push"
+strategy = "pick_object_first"
 
 while True:
 
