@@ -96,8 +96,8 @@ class FetchEnv(robot_env.RobotEnv):
             object_pos = self.sim.data.get_site_xpos('object0')
             object_1_pos = self.sim.data.get_site_xpos('object1')
             # object_2_pos = self.sim.data.get_site_xpos('object2')
-            bow_0_pos = self.sim.data.get_site_xpos('bow0')
-            bow_1_pos = self.sim.data.get_site_xpos('bow1')
+            # bow_0_pos = self.sim.data.get_site_xpos('bow0')
+            # bow_1_pos = self.sim.data.get_site_xpos('bow1')
             # bow_2_pos = self.sim.data.get_site_xpos('bow2')
 
 
@@ -132,8 +132,8 @@ class FetchEnv(robot_env.RobotEnv):
                                             object_pos, 
                                             object_1_pos, 
                                             # object_2_pos,
-                                            bow_0_pos, 
-                                            bow_1_pos, 
+                                            # bow_0_pos, 
+                                            # bow_1_pos, 
                                             # bow_2_pos,
                                             self.goal, 
                                             self.goal_1, 
@@ -202,7 +202,7 @@ class FetchEnv(robot_env.RobotEnv):
             i = 0
 
             # for name_string in ['object0:joint', 'object1:joint', 'object2:joint', 'bow0:joint', 'bow1:joint', 'bow2:joint']:
-            for name_string in ['object0:joint', 'object1:joint', 'bow0:joint', 'bow1:joint']:
+            for name_string in ['object0:joint', 'object1:joint']:
 
                 if i > 1:
                     delta = 0.15

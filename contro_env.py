@@ -139,16 +139,11 @@ def pick_and_place(position_claw, position_object, position_target):
 
 def subtask_decide(strategy_id, 
                     object_0_position, object_1_position, 
-                    bow_0_position, bow_1_position, 
                     goal_0_position, goal_1_position):
     if strategy_id == 0:
-        return object_0_position, bow_0_position
+        return object_0_position, goal_0_position
     elif strategy_id == 1:
-        return object_1_position, bow_1_position
-    elif strategy_id == 2:
-        return bow_0_position, goal_0_position
-    elif strategy_id == 3:
-        return bow_1_position, goal_1_position
+        return object_1_position, goal_1_position
 
 
 def check(object_0_position, object_1_position, 
@@ -208,10 +203,10 @@ def make_trajectory(strategy, desired_num):
         gripper_position = observation["my_new_observation"][0:3]
         object_0_position = observation["my_new_observation"][5:8]
         object_1_position = observation["my_new_observation"][8:11]
-        bow_0_position = observation["my_new_observation"][11:14]
-        bow_1_position = observation["my_new_observation"][14:17]
-        goal_0_position = observation["my_new_observation"][17:20]
-        goal_1_position = observation["my_new_observation"][20:23]
+        # bow_0_position = observation["my_new_observation"][11:14]
+        # bow_1_position = observation["my_new_observation"][14:17]
+        goal_0_position = observation["my_new_observation"][11:14]
+        goal_1_position = observation["my_new_observation"][14:17]
 
         plus = 2
         minus = 1
@@ -247,7 +242,6 @@ def make_trajectory(strategy, desired_num):
             if stage_outside == "step_1":
                 ob, tar = subtask_decide(strategy[0], 
                                         object_0_position, object_1_position, 
-                                        bow_0_position, bow_1_position, 
                                         goal_0_position, goal_1_position)
                 action_category, success = pick_and_place(gripper_position, ob, tar)
                 if success:
@@ -256,25 +250,6 @@ def make_trajectory(strategy, desired_num):
             elif stage_outside == "step_2":
                 ob, tar = subtask_decide(strategy[1], 
                                         object_0_position, object_1_position, 
-                                        bow_0_position, bow_1_position, 
-                                        goal_0_position, goal_1_position)
-                action_category, success = pick_and_place(gripper_position, ob, tar)
-                if success:
-                    stage_outside = "step_3"
-                    stage = "reach_object_above"
-            elif stage_outside == "step_3":
-                ob, tar = subtask_decide(strategy[2], 
-                                        object_0_position, object_1_position, 
-                                        bow_0_position, bow_1_position, 
-                                        goal_0_position, goal_1_position)
-                action_category, success = pick_and_place(gripper_position, ob, tar)
-                if success:
-                    stage_outside = "step_4"
-                    stage = "reach_object_above"
-            elif stage_outside == "step_4":
-                ob, tar = subtask_decide(strategy[3], 
-                                        object_0_position, object_1_position, 
-                                        bow_0_position, bow_1_position, 
                                         goal_0_position, goal_1_position)
                 action_category, success = pick_and_place(gripper_position, ob, tar)
                 if success:
@@ -304,10 +279,10 @@ def make_trajectory(strategy, desired_num):
             gripper_position = observation["my_new_observation"][0:3]
             object_0_position = observation["my_new_observation"][5:8]
             object_1_position = observation["my_new_observation"][8:11]
-            bow_0_position = observation["my_new_observation"][11:14]
-            bow_1_position = observation["my_new_observation"][14:17]
-            goal_0_position = observation["my_new_observation"][17:20]
-            goal_1_position = observation["my_new_observation"][20:23]
+            # bow_0_position = observation["my_new_observation"][11:14]
+            # bow_1_position = observation["my_new_observation"][14:17]
+            goal_0_position = observation["my_new_observation"][11:14]
+            goal_1_position = observation["my_new_observation"][14:17]
             
             one_step = []
             one_step.extend(previous_observation["my_new_observation"])
@@ -318,14 +293,9 @@ def make_trajectory(strategy, desired_num):
 
             if stage_outside == "outside_finish":
                 
-
-                if check(object_0_position, object_1_position, 
-                        bow_0_position, bow_1_position, 
-                        goal_0_position, goal_1_position):
-
-                    data.extend(one_trajectory)
-                    trajectory_num += 1
-                    image_num_already_success += len(one_trajectory)
+                data.extend(one_trajectory)
+                trajectory_num += 1
+                image_num_already_success += len(one_trajectory)
                 
                 break
 
@@ -349,4 +319,4 @@ def make_trajectory(strategy, desired_num):
 #     make_trajectory(list(perm), 20)
 
 
-make_trajectory([2, 3, 0, 1], 10000)
+make_trajectory([0, 1], 10000)

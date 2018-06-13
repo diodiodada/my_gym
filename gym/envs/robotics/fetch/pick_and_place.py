@@ -15,8 +15,6 @@ class FetchPickAndPlaceEnv(fetch_env.FetchEnv, utils.EzPickle):
             'object1:joint': [1.35, 0.63, 0.45, 1., 0., 0., 0.],
             # 'object2:joint': [1.45, 0.73, 0.45, 1., 0., 0., 0.],
 
-            'bow0:joint': [1.15, 0.53, 0.45, 1., 0., 0., 0.],
-            'bow1:joint': [1.35, 0.73, 0.45, 1., 0., 0., 0.],
             # 'bow2:joint': [1.45, 0.93, 0.45, 1., 0., 0., 0.],
         }
         fetch_env.FetchEnv.__init__(
