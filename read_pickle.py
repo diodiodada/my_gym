@@ -1,7 +1,7 @@
 import pickle
 import numpy as np
 
-data = pickle.load(open('PP-24-paths-24000.p', 'rb'))
+data = pickle.load(open('PP-1-paths-1000-[0]-end-flag.p', 'rb'))
 
 num_trajectory = 0
 
