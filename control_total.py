@@ -244,7 +244,7 @@ def make_trajectory(strategy, desired_num):
             # image_num += 1
 
             # NOT saving image
-            # env.render()
+            env.render()
 
             if stage_outside == "step_1":
                 choice = 0

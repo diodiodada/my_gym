@@ -1,33 +1,68 @@
 import pickle
 import numpy as np
 
-data = pickle.load(open('PP-1-paths-1000-[0]-end-flag.p', 'rb'))
+def get_length():
 
-num_trajectory = 0
+	data = pickle.load(open('PP-1-paths-1000-[0]-end-flag.p', 'rb'))
 
-# average_length = 0
+	num_trajectory = 0
 
-last_index = 0
+	# average_length = 0
 
-num_length = []
-for i in range(data.shape[0]):
-	if data[i, -1] == 1.0:
+	last_index = 0
 
-		# print(i)
+	num_length = []
+	for i in range(data.shape[0]):
+		if data[i, -1] == 1.0:
 
-		num_trajectory += 1
-		length = i - last_index + 1
-		num_length.append(length)
+			# print(i)
 
-		last_index = i + 1
+			num_trajectory += 1
+			length = i - last_index + 1
+			num_length.append(length)
 
-num_length = np.array(num_length)
+			last_index = i + 1
 
-print("mean:", num_length.mean(), 
-	  "variance:", num_length.var(), 
-	  "max:",num_length.max(), 
-	  "min:",num_length.min())
+	num_length = np.array(num_length)
 
-print(num_trajectory)
-print(data.shape)
-print("")
+	print("mean:", num_length.mean(), 
+		  "variance:", num_length.var(), 
+		  "max:",num_length.max(), 
+		  "min:",num_length.min())
+
+	print(num_trajectory)
+	print(data.shape)
+	print("")
+
+
+def get_data():
+
+    data = pickle.load(open('PP-24-paths-2400-2.p', 'rb'))
+
+    # data normalization
+    x = np.array([0])
+    y = x + 1
+    z = x + 2
+
+    data_x = data[:, x]
+    data_y = data[:, y]
+    data_z = data[:, z]
+
+    data_x_min = data_x.min()
+    data_x_max = data_x.max()
+    data_y_min = data_y.min()
+    data_y_max = data_y.max()
+    data_z_min = data_z.min()
+    data_z_max = data_z.max()
+
+    print(data_x.min())
+    print(data_x.max())
+    print(data_y.min())
+    print(data_y.max())
+    print(data_z.min())
+    print(data_z.max())
+
+    return 
+
+
+get_data()

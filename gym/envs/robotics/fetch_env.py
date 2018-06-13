@@ -229,6 +229,22 @@ class FetchEnv(robot_env.RobotEnv):
                 i += 1
             
         self.sim.forward()
+
+
+        # ================== begin to change initial gripper position =====================
+        
+        # Move end effector into position.
+        gripper_x = self.np_random.uniform(1.0930, 1.4965, size=1)
+        gripper_y = self.np_random.uniform(0.5626, 0.9363, size=1)
+        
+        gripper_target = np.array([gripper_x[0], gripper_y[0], 0.5397])
+        gripper_rotation = np.array([1., 0., 1., 0.])
+        self.sim.data.set_mocap_pos('robot0:mocap', gripper_target)
+        self.sim.data.set_mocap_quat('robot0:mocap', gripper_rotation)
+        for _ in range(10):
+            self.sim.step()
+
+
         return True
 
     def _sample_goal(self):
@@ -325,7 +341,6 @@ class FetchEnv(robot_env.RobotEnv):
         # Move end effector into position.
         # gripper_target = np.array([-0.498, 0.005, -0.431 + self.gripper_extra_height]) + self.sim.data.get_site_xpos('robot0:grip')
         gripper_target = np.array([-0.498, 0.005, -0.431 + self.gripper_extra_height]) + self.sim.data.get_site_xpos('robot0:grip')
-
         gripper_rotation = np.array([1., 0., 1., 0.])
         self.sim.data.set_mocap_pos('robot0:mocap', gripper_target)
         self.sim.data.set_mocap_quat('robot0:mocap', gripper_rotation)
