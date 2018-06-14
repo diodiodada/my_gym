@@ -185,7 +185,7 @@ stage = "reach_object_above"
 env = gym.make('FetchPickAndPlace-v0')
 
 
-def make_trajectory(strategy, desired_num):
+def make_trajectory(strategy, desired_num, render):
 
     global stage
     global ground_height
@@ -242,7 +242,8 @@ def make_trajectory(strategy, desired_num):
             # image_num += 1
 
             # NOT saving image
-            env.render()
+            if render:
+                env.render()
 
             if stage_outside == "step_1":
                 ob, tar = subtask_decide(strategy[0], 
@@ -339,7 +340,7 @@ def make_trajectory(strategy, desired_num):
     print(image_num_already_success)
 
     data = np.array(data)
-    pickle.dump(data, open("PP-1-paths-"+str(desired_num)+"-"+str(strategy)+".p", "wb"))
+    pickle.dump(data, open("PP-1-paths-"+str(desired_num)+"-"+str(strategy)+"-random-init.p", "wb"))
 
 
 
@@ -349,4 +350,4 @@ def make_trajectory(strategy, desired_num):
 #     make_trajectory(list(perm), 20)
 
 
-make_trajectory([2, 3, 0, 1], 10000)
+make_trajectory([0, 1, 2, 3], 1000, False)
