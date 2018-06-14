@@ -131,22 +131,11 @@ def pick_and_place(position_claw, position_object, position_target):
         action_3 = [0, 0, ground_height + 0.1 - position_claw[2] ]
 
         if evalue_move(action_3):
-            stage = "back_init_position"
+            stage = "stay"
 
         else:
             action[0:3] = decide_move(action_3)
         action[3] = hand_open
-
-    # step_9: back init position (close hand)
-    elif stage == "back_init_position":
-
-        action_3 = init_position - position_claw
-
-        if evalue_move(action_3):
-            stage = "stay"
-        else:
-            action[0:3] = decide_move(action_3)
-        action[3] = close
 
     # step_10: stay (open hand)
     elif stage == "stay":
@@ -157,7 +146,7 @@ def pick_and_place(position_claw, position_object, position_target):
         else:
             stage = "inside_finish"
             stay_counter = 0
-        action[3] = close
+        action[3] = hand_open
 
     return action, end_flag
 
@@ -211,7 +200,7 @@ stage = "reach_object_above"
 env = gym.make('FetchPickAndPlace-v0')
 
 
-def make_trajectory(strategy, desired_num):
+def make_trajectory(strategy, desired_num, render):
 
     global stage
     global ground_height
@@ -268,7 +257,8 @@ def make_trajectory(strategy, desired_num):
             # image_num += 1
 
             # NOT saving image
-            env.render()
+            if render:
+                env.render()
 
             if stage_outside == "step_1":
                 ob, tar = subtask_decide(strategy[0], 
@@ -332,7 +322,7 @@ def make_trajectory(strategy, desired_num):
     print(image_num_already_success)
 
     data = np.array(data)
-    pickle.dump(data, open("PP-1-paths-"+str(desired_num)+"-"+str(strategy)+"-end-flag.p", "wb"))
+    pickle.dump(data, open("PP-1-paths-"+str(desired_num)+"-"+str(strategy)+"-end-flag-random-init.p", "wb"))
 
 
 
@@ -342,4 +332,4 @@ def make_trajectory(strategy, desired_num):
 #     make_trajectory(list(perm), 20)
 
 
-make_trajectory([0], 1000)
+make_trajectory([2], 1000, False)

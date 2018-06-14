@@ -185,7 +185,7 @@ stage = "reach_object_above"
 env = gym.make('FetchPickAndPlace-v0')
 
 
-def make_trajectory(strategy, desired_num):
+def make_trajectory(strategy, desired_num, render):
 
     global stage
     global ground_height
@@ -201,8 +201,6 @@ def make_trajectory(strategy, desired_num):
 
         stage = "reach_object_above"
         stage_outside = "step_1"
-
-        choice = 0
 
         observation = env.reset()
         done = False
@@ -224,7 +222,6 @@ def make_trajectory(strategy, desired_num):
         ground_height = object_0_position[2]
 
         one_trajectory = []
-        final_success = False
 
         image_num = image_num_already_success
 
@@ -232,6 +229,13 @@ def make_trajectory(strategy, desired_num):
 
         # to avoid all black image
         # env.render(mode='rgb_array')
+
+
+        one_step = []
+        one_step.extend(observation["my_new_observation"])
+        one_step.extend([strategy[0]])
+        one_step.extend([float(0)])
+        one_trajectory.append(one_step)
 
         while not done:
 
@@ -244,10 +248,10 @@ def make_trajectory(strategy, desired_num):
             # image_num += 1
 
             # NOT saving image
-            env.render()
+            if render:
+                env.render()
 
             if stage_outside == "step_1":
-                choice = 0
                 ob, tar = subtask_decide(strategy[0], 
                                         object_0_position, object_1_position, 
                                         bow_0_position, bow_1_position, 
@@ -256,8 +260,14 @@ def make_trajectory(strategy, desired_num):
                 if success:
                     stage_outside = "step_2"
                     stage = "reach_object_above"
+
+                    one_step = []
+                    one_step.extend(observation["my_new_observation"])
+                    one_step.extend([strategy[1]])
+                    one_step.extend([float(0)])
+                    one_trajectory.append(one_step)
+
             elif stage_outside == "step_2":
-                choice = 1
                 ob, tar = subtask_decide(strategy[1], 
                                         object_0_position, object_1_position, 
                                         bow_0_position, bow_1_position, 
@@ -266,8 +276,14 @@ def make_trajectory(strategy, desired_num):
                 if success:
                     stage_outside = "step_3"
                     stage = "reach_object_above"
+
+                    one_step = []
+                    one_step.extend(observation["my_new_observation"])
+                    one_step.extend([strategy[2]])
+                    one_step.extend([float(0)])
+                    one_trajectory.append(one_step)
+
             elif stage_outside == "step_3":
-                choice = 2
                 ob, tar = subtask_decide(strategy[2], 
                                         object_0_position, object_1_position, 
                                         bow_0_position, bow_1_position, 
@@ -276,8 +292,14 @@ def make_trajectory(strategy, desired_num):
                 if success:
                     stage_outside = "step_4"
                     stage = "reach_object_above"
+
+                    one_step = []
+                    one_step.extend(observation["my_new_observation"])
+                    one_step.extend([strategy[3]])
+                    one_step.extend([float(1)])
+                    one_trajectory.append(one_step)
+
             elif stage_outside == "step_4":
-                choice = 3
                 ob, tar = subtask_decide(strategy[3], 
                                         object_0_position, object_1_position, 
                                         bow_0_position, bow_1_position, 
@@ -286,7 +308,6 @@ def make_trajectory(strategy, desired_num):
                 if success:
                     stage_outside = "outside_finish"
                     stage = "reach_object_above"
-                    final_success = True
 
             action = np.zeros((4))
 
@@ -314,13 +335,7 @@ def make_trajectory(strategy, desired_num):
             bow_1_position = observation["my_new_observation"][14:17]
             goal_0_position = observation["my_new_observation"][17:20]
             goal_1_position = observation["my_new_observation"][20:23]
-            
-            one_step = []
-            one_step.extend(previous_observation["my_new_observation"])
-            one_step.extend([choice])
-            one_step.extend(observation["my_new_observation"])
-            one_step.extend([float(final_success)])
-            one_trajectory.append(one_step)
+
 
             if stage_outside == "outside_finish":
                 
@@ -345,7 +360,7 @@ def make_trajectory(strategy, desired_num):
     print(image_num_already_success)
 
     data = np.array(data)
-    pickle.dump(data, open("PP-1-paths-"+str(desired_num)+"-"+str(strategy)+"-top.p", "wb"))
+    pickle.dump(data, open("PP-1-paths-"+str(desired_num)+"-"+str(strategy)+"-top4.p", "wb"))
 
 
 
@@ -355,4 +370,4 @@ def make_trajectory(strategy, desired_num):
 #     make_trajectory(list(perm), 20)
 
 
-make_trajectory([0, 1, 2, 3], 1000)
+make_trajectory([0, 1, 2, 3], 1000, False)

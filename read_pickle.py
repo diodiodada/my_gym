@@ -3,7 +3,7 @@ import numpy as np
 
 def get_length():
 
-	data = pickle.load(open('PP-1-paths-1000-[0]-end-flag.p', 'rb'))
+	data = pickle.load(open('PP-1-paths-1000-[0, 1, 2, 3]-top4.p', 'rb'))
 
 	num_trajectory = 0
 
@@ -65,4 +65,4 @@ def get_data():
     return 
 
 
-get_data()
+get_length()
