@@ -333,7 +333,19 @@ for reward_type in ['sparse', 'dense']:
         max_episode_steps=200,
     )
 
+    register(
+        id='FPPGC2{}-v0'.format(suffix),
+        entry_point='gym.envs.robotics:FPPGC2Env',
+        kwargs=kwargs,
+        max_episode_steps=200,
+    )
 
+    register(
+        id='FPPC2{}-v0'.format(suffix),
+        entry_point='gym.envs.robotics:FPPC2Env',
+        kwargs=kwargs,
+        max_episode_steps=200,
+    )
 
     register(
         id='FetchReach{}-v0'.format(suffix),
